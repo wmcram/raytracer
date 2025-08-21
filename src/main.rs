@@ -4,6 +4,7 @@ mod hit;
 mod interval;
 mod ray;
 mod sphere;
+mod utils;
 mod vec3;
 
 use camera::Camera;
@@ -17,6 +18,6 @@ fn main() {
     world.add(Rc::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
     world.add(Rc::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
 
-    let cam = Camera::new(16.0 / 9.0, 400);
+    let cam = Camera::new(16.0 / 9.0, 400, 10);
     cam.render(&world);
 }
