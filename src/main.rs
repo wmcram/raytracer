@@ -1,11 +1,10 @@
 mod color;
+mod ray;
 mod vec3;
 
 use std::io::stdout;
 
-use color::Color;
-
-use crate::color::write_color;
+use color::{Color, write_color};
 
 fn main() {
     let image_width = 256;
