@@ -1,30 +1,34 @@
 mod color;
+mod hit;
+mod interval;
 mod ray;
+mod sphere;
 mod vec3;
 
-use std::io::stdout;
+use std::{io::stdout, rc::Rc};
 
 use color::{Color, write_color};
+use hit::{Hit, HitRecord};
 use ray::Ray;
-use vec3::{Vec3, dot, unit_vector};
+use vec3::{Vec3, unit_vector};
 
-fn hit_sphere(center: Vec3, radius: f64, r: &Ray) -> bool {
-    let oc = center - r.origin();
-    let a = dot(&r.direction(), &r.direction());
-    let b = dot(&r.direction(), &oc) * -2.0;
-    let c = dot(&oc, &oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    discriminant >= 0.0
-}
+use crate::{hit::Hittables, interval::Interval, sphere::Sphere};
 
-fn ray_color(ray: &Ray) -> Color {
-    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, ray) {
-        return Color::new(1.0, 0.0, 0.0);
+fn ray_color(r: &Ray, world: &dyn Hit) -> Color {
+    let mut rec = HitRecord::default();
+    if world.hit(
+        r,
+        Interval {
+            min: 0.0,
+            max: f64::INFINITY,
+        },
+        &mut rec,
+    ) {
+        return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
     }
-    let unit_direction = unit_vector(&ray.direction());
-    let a = (unit_direction.y() + 1.0) * 0.5;
-    // lerp the color to form a gradient
-    Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
+    let unit_direction = unit_vector(&r.direction());
+    let a = 0.5 * (unit_direction.y() + 1.0);
+    return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
 }
 
 fn main() {
@@ -33,6 +37,10 @@ fn main() {
 
     let image_height = (image_width as f64 / aspect_ratio) as usize;
     let image_height = if image_height < 1 { 1 } else { image_height };
+
+    let mut world = Hittables::default();
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Rc::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
 
     let focal_length = 1.0;
     let viewport_height = 2.0;
@@ -57,7 +65,7 @@ fn main() {
                 pixel00_loc + (pixel_delta_u * i as f64) + (pixel_delta_v * j as f64);
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&mut stdout(), &pixel_color);
         }
     }
