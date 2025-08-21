@@ -51,7 +51,7 @@ impl Camera {
     pub fn render(&self, world: &dyn Hit) {
         print!("P3\n{} {}\n255\n", self.image_width, self.image_height);
         for j in 0..self.image_height {
-            eprint!("\rScanlines remaining: {}", self.image_height - j);
+            eprint!("\rScanlines remaining: {}    ", self.image_height - j);
             for i in 0..self.image_width {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
@@ -75,7 +75,9 @@ impl Camera {
             },
             &mut rec,
         ) {
-            return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+            let direction = Vec3::random_on_hemisphere(&rec.normal);
+            // Rays lose half their color on bounce
+            return Self::ray_color(&Ray::new(rec.p, direction), world) * 0.5;
         }
         let unit_direction = unit_vector(&r.direction());
         let a = 0.5 * (unit_direction.y() + 1.0);
