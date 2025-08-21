@@ -1,1 +1,7 @@
 /build
+image.ppm
+
+
+# Added by cargo
+
+/target
