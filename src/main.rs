@@ -6,10 +6,22 @@ use std::io::stdout;
 
 use color::{Color, write_color};
 use ray::Ray;
-use vec3::{Vec3, unit_vector};
+use vec3::{Vec3, dot, unit_vector};
+
+fn hit_sphere(center: Vec3, radius: f64, r: &Ray) -> bool {
+    let oc = center - r.origin();
+    let a = dot(&r.direction(), &r.direction());
+    let b = dot(&r.direction(), &oc) * -2.0;
+    let c = dot(&oc, &oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant >= 0.0
+}
 
 fn ray_color(ray: &Ray) -> Color {
-    let unit_direction = unit_vector(ray.direction());
+    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, ray) {
+        return Color::new(1.0, 0.0, 0.0);
+    }
+    let unit_direction = unit_vector(&ray.direction());
     let a = (unit_direction.y() + 1.0) * 0.5;
     // lerp the color to form a gradient
     Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a

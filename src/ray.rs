@@ -14,12 +14,12 @@ impl Ray {
         }
     }
 
-    pub fn origin(&self) -> &Vec3 {
-        &self.orig
+    pub fn origin(&self) -> Vec3 {
+        self.orig
     }
 
-    pub fn direction(&self) -> &Vec3 {
-        &self.dir
+    pub fn direction(&self) -> Vec3 {
+        self.dir
     }
 
     pub fn at(&self, t: f64) -> Vec3 {
