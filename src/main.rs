@@ -7,6 +7,7 @@ mod interval;
 mod material;
 mod ray;
 mod sphere;
+mod texture;
 mod utils;
 mod vec3;
 
@@ -19,16 +20,20 @@ use std::sync::Arc;
 use utils::random_f64;
 use vec3::Vec3;
 
-use crate::{bvh::BVHNode, utils::random_range_f64};
+use crate::{bvh::BVHNode, texture::CheckerTexture, utils::random_range_f64};
 
 fn main() {
     let mut world = Hittables::default();
 
-    let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let checker = Arc::new(CheckerTexture::new_solid(
+        0.32,
+        Color::new(0.2, 0.3, 0.1),
+        Color::new(0.9, 0.9, 0.9),
+    ));
     world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
-        ground_material,
+        Arc::new(Lambertian::new(checker)),
     )));
 
     for a in -11..11 {
@@ -44,7 +49,7 @@ fn main() {
                 match choose_mat {
                     choose_mat if choose_mat < 0.8 => {
                         let albedo = Color::random() * Color::random();
-                        let mat = Arc::new(Lambertian::new(albedo));
+                        let mat = Arc::new(Lambertian::new_color(albedo));
                         let center2 = center + Vec3::new(0.0, random_range_f64(0.0, 0.5), 0.0);
                         world.add(Arc::new(Sphere::new_moving(center, center2, 0.2, mat)));
                     }
@@ -75,7 +80,7 @@ fn main() {
         1.0,
         material_2,
     )));
-    let material_3 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let material_3 = Arc::new(Lambertian::new_color(Color::new(0.4, 0.2, 0.1)));
     world.add(Arc::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,

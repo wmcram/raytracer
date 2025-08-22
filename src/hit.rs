@@ -16,6 +16,8 @@ pub struct HitRecord {
     pub t: f64,
     pub front_face: bool,
     pub mat: Arc<dyn Material>,
+    pub u: f64,
+    pub v: f64,
 }
 
 impl Default for HitRecord {
@@ -25,7 +27,9 @@ impl Default for HitRecord {
             normal: Vec3::default(),
             t: f64::default(),
             front_face: bool::default(),
-            mat: Arc::new(Lambertian::new(Color::default())),
+            mat: Arc::new(Lambertian::new_color(Color::default())),
+            u: Default::default(),
+            v: Default::default(),
         }
     }
 }
