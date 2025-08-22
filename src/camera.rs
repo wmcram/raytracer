@@ -14,6 +14,8 @@ pub struct Camera {
     pub lookfrom: Vec3,
     pub lookat: Vec3,
     pub vup: Vec3,
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
 
     image_height: usize,
     center: Vec3,
@@ -27,6 +29,8 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 impl Default for Camera {
@@ -40,6 +44,8 @@ impl Default for Camera {
             lookfrom: Vec3::new(0.0, 0.0, 0.0),
             lookat: Vec3::new(0.0, 0.0, -1.0),
             vup: Vec3::new(0.0, 1.0, 0.0),
+            defocus_angle: 0.0,
+            focus_dist: 10.0,
 
             image_height: Default::default(),
             pixel_samples_scale: Default::default(),
@@ -50,6 +56,8 @@ impl Default for Camera {
             u: Default::default(),
             v: Default::default(),
             w: Default::default(),
+            defocus_disk_u: Default::default(),
+            defocus_disk_v: Default::default(),
         }
     }
 }
@@ -66,10 +74,9 @@ impl Camera {
         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
         self.center = self.lookfrom;
 
-        let focal_length = (self.lookfrom - self.lookat).length();
         let theta = f64::to_radians(self.vfov);
         let h = f64::tan(theta / 2.0);
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         self.w = unit_vector(&(self.lookfrom - self.lookat));
@@ -81,8 +88,12 @@ impl Camera {
         self.pixel_delta_u = viewport_u / self.image_width as f64;
         self.pixel_delta_v = viewport_v / self.image_height as f64;
         let viewport_upper_left =
-            self.center - (self.w * focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+            self.center - (self.w * self.focus_dist) - viewport_u / 2.0 - viewport_v / 2.0;
         self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) * 0.5;
+
+        let defocus_radius = self.focus_dist * f64::tan(f64::to_radians(self.defocus_angle / 2.0));
+        self.defocus_disk_u = self.u * defocus_radius;
+        self.defocus_disk_v = self.v * defocus_radius;
     }
 
     // Outputs the image (in PPM format) to standard output.
@@ -137,12 +148,21 @@ impl Camera {
         let pixel_sample = self.pixel00_loc
             + (self.pixel_delta_u * (i as f64 + offset.x()))
             + (self.pixel_delta_v * (j as f64 + offset.y()));
-        let ray_origin = self.center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
         let ray_direction = pixel_sample - ray_origin;
         Ray::new(ray_origin, ray_direction)
     }
 
     fn sample_square() -> Vec3 {
         Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
+    }
+
+    fn defocus_disk_sample(&self) -> Vec3 {
+        let p = Vec3::random_in_unit_disk();
+        return self.center + (self.defocus_disk_u * p[0]) + (self.defocus_disk_v * p[1]);
     }
 }
