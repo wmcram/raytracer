@@ -11,7 +11,7 @@ mod vec3;
 use camera::Camera;
 use color::Color;
 use hit::Hittables;
-use material::{Lambertian, Metal};
+use material::{Dielectric, Lambertian, Metal};
 use sphere::Sphere;
 use std::rc::Rc;
 use vec3::Vec3;
@@ -21,7 +21,8 @@ fn main() {
 
     let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
     let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8)));
+    let material_left = Rc::new(Dielectric::new(1.50));
+    let material_bubble = Rc::new(Dielectric::new(1.00 / 1.50));
     let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
 
     world.add(Rc::new(Sphere::new(
@@ -40,11 +41,25 @@ fn main() {
         material_left,
     )));
     world.add(Rc::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.4,
+        material_bubble,
+    )));
+    world.add(Rc::new(Sphere::new(
         Vec3::new(1.0, 0.0, -1.0),
         0.5,
         material_right,
     )));
 
-    let cam = Camera::new(16.0 / 9.0, 400, 10);
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(-2.0, 2.0, 1.0);
+    cam.lookat = Vec3::new(0.0, 0.0, -1.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.render(&world);
 }

@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fmt::{self, Display};
 use std::ops::{Mul, MulAssign};
 
@@ -44,6 +45,16 @@ impl Vec3 {
         *v - *n * 2.0 * dot(v, n)
     }
 
+    // Creates the vector representing the refraction
+    // of uv through the surface with surface normal n and
+    // refraction indices eta_i, eta_t.
+    pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = f64::min(dot(&-uv, &n), 1.0);
+        let r_out_perp = (uv + n * cos_theta) * etai_over_etat;
+        let r_out_para = n * -f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared()));
+        r_out_perp + r_out_para
+    }
+
     pub fn random() -> Self {
         Vec3::new(random_f64(), random_f64(), random_f64())
     }
@@ -72,6 +83,19 @@ impl Vec3 {
             on_unit_sphere
         } else {
             -on_unit_sphere
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3::new(
+                random_range_f64(-1.0, 1.0),
+                random_range_f64(-1.0, 1.0),
+                0.0,
+            );
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 }

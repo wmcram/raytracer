@@ -3,54 +3,91 @@ use crate::hit::{Hit, HitRecord};
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::utils::random_f64;
-use crate::vec3::{Vec3, unit_vector};
+use crate::vec3::{Vec3, cross, unit_vector};
 
 pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: usize,
     pub samples_per_pixel: u32,
     pub max_depth: u32,
+    pub vfov: f64,
+    pub lookfrom: Vec3,
+    pub lookat: Vec3,
+    pub vup: Vec3,
 
     image_height: usize,
     center: Vec3,
     pixel00_loc: Vec3,
+    // pixel gaps
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    // normalization factor for samples
     pixel_samples_scale: f64,
+    // camera frame basis vectors
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Self {
+            aspect_ratio: 1.0,
+            image_width: 100,
+            samples_per_pixel: 10,
+            max_depth: 10,
+            vfov: 90.0,
+            lookfrom: Vec3::new(0.0, 0.0, 0.0),
+            lookat: Vec3::new(0.0, 0.0, -1.0),
+            vup: Vec3::new(0.0, 1.0, 0.0),
+
+            image_height: Default::default(),
+            pixel_samples_scale: Default::default(),
+            center: Default::default(),
+            pixel00_loc: Default::default(),
+            pixel_delta_u: Default::default(),
+            pixel_delta_v: Default::default(),
+            u: Default::default(),
+            v: Default::default(),
+            w: Default::default(),
+        }
+    }
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: usize, samples_per_pixel: u32) -> Self {
-        let image_height = (image_width as f64 / aspect_ratio) as usize;
-        let image_height = if image_height < 1 { 1 } else { image_height };
-        let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
-        let center = Vec3::new(0.0, 0.0, 0.0);
-        let focal_length = 1.0;
-        let viewport_height = 2.0;
-        let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
-        let pixel_delta_u = viewport_u / image_width as f64;
-        let pixel_delta_v = viewport_v / image_height as f64;
-        let viewport_upper_left =
-            center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-        let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
+    pub fn initialize(&mut self) {
+        self.image_height = (self.image_width as f64 / self.aspect_ratio) as usize;
+        self.image_height = if self.image_height < 1 {
+            1
+        } else {
+            self.image_height
+        };
 
-        Self {
-            aspect_ratio,
-            image_width,
-            samples_per_pixel,
-            max_depth: 50,
-            image_height,
-            center,
-            pixel00_loc,
-            pixel_delta_u,
-            pixel_delta_v,
-            pixel_samples_scale,
-        }
+        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+        self.center = self.lookfrom;
+
+        let focal_length = (self.lookfrom - self.lookat).length();
+        let theta = f64::to_radians(self.vfov);
+        let h = f64::tan(theta / 2.0);
+        let viewport_height = 2.0 * h * focal_length;
+        let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
+
+        self.w = unit_vector(&(self.lookfrom - self.lookat));
+        self.u = unit_vector(&cross(&self.vup, &self.w));
+        self.v = cross(&self.w, &self.u);
+
+        let viewport_u = self.u * viewport_width;
+        let viewport_v = -self.v * viewport_height;
+        self.pixel_delta_u = viewport_u / self.image_width as f64;
+        self.pixel_delta_v = viewport_v / self.image_height as f64;
+        let viewport_upper_left =
+            self.center - (self.w * focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) * 0.5;
     }
 
-    pub fn render(&self, world: &dyn Hit) {
+    // Outputs the image (in PPM format) to standard output.
+    pub fn render(&mut self, world: &dyn Hit) {
+        self.initialize();
         print!("P3\n{} {}\n255\n", self.image_width, self.image_height);
         for j in 0..self.image_height {
             eprint!("\rScanlines remaining: {}    ", self.image_height - j);
@@ -67,6 +104,8 @@ impl Camera {
         eprint!("\rDone.              \n");
     }
 
+    // Determines the color that the camera sees along this ray. This function calls itself
+    // recursively up to limit `depth` to account for reflection/refraction.
     fn ray_color(r: &Ray, depth: u32, world: &dyn Hit) -> Color {
         if depth <= 0 {
             return Color::default();
@@ -105,11 +144,5 @@ impl Camera {
 
     fn sample_square() -> Vec3 {
         Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
-    }
-}
-
-impl Default for Camera {
-    fn default() -> Self {
-        Self::new(1.0, 100, 10)
     }
 }
