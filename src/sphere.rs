@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::hit::Hit;
 use crate::interval::Interval;
@@ -9,11 +9,11 @@ use crate::vec3::{Vec3, dot};
 pub struct Sphere {
     center: Vec3,
     radius: f64,
-    mat: Rc<dyn Material>,
+    mat: Arc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    pub fn new(center: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
         Self {
             center: center,
             radius: f64::max(0.0, radius),

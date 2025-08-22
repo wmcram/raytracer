@@ -1,4 +1,4 @@
-use std::{default, rc::Rc};
+use std::{default, sync::Arc};
 
 use crate::{
     color::Color,
@@ -14,7 +14,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub mat: Rc<dyn Material>,
+    pub mat: Arc<dyn Material>,
 }
 
 impl Default for HitRecord {
@@ -24,7 +24,7 @@ impl Default for HitRecord {
             normal: Vec3::default(),
             t: f64::default(),
             front_face: bool::default(),
-            mat: Rc::new(Lambertian::new(Color::default())),
+            mat: Arc::new(Lambertian::new(Color::default())),
         }
     }
 }
@@ -42,7 +42,7 @@ impl HitRecord {
     }
 }
 
-pub trait Hit {
+pub trait Hit: Send + Sync {
     // Determines if the given ray will hit the implementer such that t lies in
     // the interval (ray_tmin, ray_tmax). If so, the HitRecord struct will be populated
     // with information about the hit.
@@ -51,7 +51,7 @@ pub trait Hit {
 
 #[derive(Default)]
 pub struct Hittables {
-    pub objects: Vec<Rc<dyn Hit>>,
+    pub objects: Vec<Arc<dyn Hit>>,
 }
 
 impl Hittables {
@@ -59,13 +59,13 @@ impl Hittables {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, object: Rc<dyn Hit>) {
+    pub fn add(&mut self, object: Arc<dyn Hit>) {
         self.objects.push(object);
     }
 }
 
-impl From<Rc<dyn Hit>> for Hittables {
-    fn from(value: Rc<dyn Hit>) -> Self {
+impl From<Arc<dyn Hit>> for Hittables {
+    fn from(value: Arc<dyn Hit>) -> Self {
         Self {
             objects: vec![value],
         }

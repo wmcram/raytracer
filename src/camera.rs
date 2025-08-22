@@ -1,3 +1,6 @@
+use indicatif::ParallelProgressIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
 use crate::color::{Color, write_color};
 use crate::hit::{Hit, HitRecord};
 use crate::interval::Interval;
@@ -99,10 +102,14 @@ impl Camera {
     // Outputs the image (in PPM format) to standard output.
     pub fn render(&mut self, world: &dyn Hit) {
         self.initialize();
+        eprintln!("Rendering...");
         print!("P3\n{} {}\n255\n", self.image_width, self.image_height);
-        for j in 0..self.image_height {
-            eprint!("\rScanlines remaining: {}    ", self.image_height - j);
-            for i in 0..self.image_width {
+        (0..self.image_height * self.image_width)
+            .into_par_iter()
+            .progress_count((self.image_height * self.image_width) as u64)
+            .for_each(|k| {
+                let j = k / self.image_width;
+                let i = k % self.image_width;
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
@@ -110,8 +117,7 @@ impl Camera {
                 }
                 let pixel_color = pixel_color * self.pixel_samples_scale;
                 write_color(&mut std::io::stdout(), &pixel_color);
-            }
-        }
+            });
         eprint!("\rDone.              \n");
     }
 

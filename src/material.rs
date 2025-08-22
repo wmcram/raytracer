@@ -6,7 +6,7 @@ use crate::{
     vec3::{Vec3, dot, unit_vector},
 };
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(
         &self,
         r_in: &Ray,
