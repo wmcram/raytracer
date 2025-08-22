@@ -9,6 +9,7 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: usize,
     pub samples_per_pixel: u32,
+    pub max_depth: u32,
 
     image_height: usize,
     center: Vec3,
@@ -39,6 +40,7 @@ impl Camera {
             aspect_ratio,
             image_width,
             samples_per_pixel,
+            max_depth: 50,
             image_height,
             center,
             pixel00_loc,
@@ -56,28 +58,35 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&r, world);
+                    pixel_color += Self::ray_color(&r, self.max_depth, world);
                 }
                 let pixel_color = pixel_color * self.pixel_samples_scale;
                 write_color(&mut std::io::stdout(), &pixel_color);
             }
         }
-        eprint!("\rDone.              ");
+        eprint!("\rDone.              \n");
     }
 
-    fn ray_color(r: &Ray, world: &dyn Hit) -> Color {
+    fn ray_color(r: &Ray, depth: u32, world: &dyn Hit) -> Color {
+        if depth <= 0 {
+            return Color::default();
+        }
+
         let mut rec = HitRecord::default();
         if world.hit(
             r,
             Interval {
-                min: 0.0,
+                min: 0.001,
                 max: f64::INFINITY,
             },
             &mut rec,
         ) {
-            let direction = Vec3::random_on_hemisphere(&rec.normal);
-            // Rays lose half their color on bounce
-            return Self::ray_color(&Ray::new(rec.p, direction), world) * 0.5;
+            let mut scattered = Ray::default();
+            let mut attentuation = Color::default();
+            if rec.mat.scatter(r, &rec, &mut attentuation, &mut scattered) {
+                return attentuation * Self::ray_color(&scattered, depth - 1, world);
+            }
+            return Color::default();
         }
         let unit_direction = unit_vector(&r.direction());
         let a = 0.5 * (unit_direction.y() + 1.0);

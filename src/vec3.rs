@@ -33,6 +33,17 @@ impl Vec3 {
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
     }
 
+    pub fn near_zero(&self) -> bool {
+        const EPS: f64 = 1e-8;
+        f64::abs(self.e[0]) < EPS && f64::abs(self.e[1]) < EPS && f64::abs(self.e[2]) < EPS
+    }
+
+    // Creates the vector representing the reflection
+    // of v off the surface with normal n.
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        *v - *n * 2.0 * dot(v, n)
+    }
+
     pub fn random() -> Self {
         Vec3::new(random_f64(), random_f64(), random_f64())
     }
