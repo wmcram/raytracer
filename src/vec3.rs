@@ -98,6 +98,8 @@ impl Vec3 {
             }
         }
     }
+
+    pub const ZERO: Vec3 = Vec3 { e: [0.0, 0.0, 0.0] };
 }
 
 pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
@@ -216,7 +218,7 @@ impl std::ops::Div<f64> for Vec3 {
 
 impl Default for Vec3 {
     fn default() -> Self {
-        Self { e: [0.0, 0.0, 0.0] }
+        Self::ZERO
     }
 }
 

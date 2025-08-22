@@ -7,7 +7,7 @@ use crate::ray::Ray;
 use crate::vec3::{Vec3, dot};
 
 pub struct Sphere {
-    center: Vec3,
+    center: Ray,
     radius: f64,
     mat: Arc<dyn Material>,
 }
@@ -15,7 +15,15 @@ pub struct Sphere {
 impl Sphere {
     pub fn new(center: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
         Self {
-            center: center,
+            center: Ray::new(center, Vec3::ZERO),
+            radius: f64::max(0.0, radius),
+            mat,
+        }
+    }
+
+    pub fn new_moving(center1: Vec3, center2: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
+        Self {
+            center: Ray::new(center1, center2 - center1),
             radius: f64::max(0.0, radius),
             mat,
         }
@@ -24,7 +32,8 @@ impl Sphere {
 
 impl Hit for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut crate::hit::HitRecord) -> bool {
-        let oc = self.center - r.origin();
+        let current_center = self.center.at(r.time());
+        let oc = current_center - r.origin();
         let a = r.direction().length_squared();
         let h = dot(&r.direction(), &oc);
         let c = oc.length_squared() - self.radius * self.radius;
@@ -47,7 +56,7 @@ impl Hit for Sphere {
         rec.t = root;
         rec.p = r.at(rec.t);
         rec.mat = self.mat.clone();
-        let outward_normal = (rec.p - self.center) / self.radius;
+        let outward_normal = (rec.p - current_center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         return true;
     }
