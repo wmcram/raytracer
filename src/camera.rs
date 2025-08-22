@@ -1,3 +1,5 @@
+use std::io;
+
 use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -102,12 +104,14 @@ impl Camera {
     // Outputs the image (in PPM format) to standard output.
     pub fn render(&mut self, world: &dyn Hit) {
         self.initialize();
+        let total = self.image_width * self.image_height;
+
         eprintln!("Rendering...");
         print!("P3\n{} {}\n255\n", self.image_width, self.image_height);
-        (0..self.image_height * self.image_width)
+        let pixels: Vec<Color> = (0..total)
             .into_par_iter()
-            .progress_count((self.image_height * self.image_width) as u64)
-            .for_each(|k| {
+            .progress_count(total as u64)
+            .map(|k| {
                 let j = k / self.image_width;
                 let i = k % self.image_width;
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
@@ -115,9 +119,13 @@ impl Camera {
                     let r = self.get_ray(i, j);
                     pixel_color += Self::ray_color(&r, self.max_depth, world);
                 }
-                let pixel_color = pixel_color * self.pixel_samples_scale;
-                write_color(&mut std::io::stdout(), &pixel_color);
-            });
+                pixel_color * self.pixel_samples_scale
+            })
+            .collect();
+        let mut out = io::BufWriter::new(io::stdout().lock());
+        for color in pixels {
+            write_color(&mut out, &color);
+        }
         eprint!("\rDone.              \n");
     }
 

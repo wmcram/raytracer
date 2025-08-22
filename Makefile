@@ -1,3 +1,11 @@
 .PHONY: render
-render:
-	cargo run --quiet > image.ppm
+render: build
+	 ./target/release/raytracer > image.ppm
+
+.PHONY: build
+build:
+	cargo build --release
+
+.PHONY: clean
+clean:
+	rm -rf ./target
