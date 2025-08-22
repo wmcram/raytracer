@@ -1,6 +1,7 @@
 use std::{default, sync::Arc};
 
 use crate::{
+    aabb::AABB,
     color::Color,
     interval::Interval,
     material::{Lambertian, Material},
@@ -47,11 +48,16 @@ pub trait Hit: Send + Sync {
     // the interval (ray_tmin, ray_tmax). If so, the HitRecord struct will be populated
     // with information about the hit.
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool;
+
+    // Returns an axis-aligned bounding box surrounding this object.
+    fn bounding_box(&self) -> AABB;
 }
 
 #[derive(Default)]
 pub struct Hittables {
     pub objects: Vec<Arc<dyn Hit>>,
+
+    bbox: AABB,
 }
 
 impl Hittables {
@@ -60,14 +66,16 @@ impl Hittables {
     }
 
     pub fn add(&mut self, object: Arc<dyn Hit>) {
-        self.objects.push(object);
+        self.objects.push(object.clone());
+        self.bbox = AABB::from((self.bbox, object.bounding_box()))
     }
 }
 
-impl From<Arc<dyn Hit>> for Hittables {
-    fn from(value: Arc<dyn Hit>) -> Self {
+impl<T: Hit + 'static> From<Arc<T>> for Hittables {
+    fn from(value: Arc<T>) -> Self {
         Self {
             objects: vec![value],
+            bbox: AABB::default(),
         }
     }
 }
@@ -92,5 +100,9 @@ impl Hit for Hittables {
             }
         }
         return hit_anything;
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox
     }
 }

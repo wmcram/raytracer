@@ -29,6 +29,19 @@ impl Interval {
         }
     }
 
+    pub fn expand(&self, delta: f64) -> Self {
+        let padding = delta / 2.0;
+        Interval::new(self.min - padding, self.max + padding)
+    }
+
+    // Returns the interval enclosing both i1 and i2.
+    pub fn enclosing(i1: Interval, i2: Interval) -> Self {
+        Self {
+            min: f64::min(i1.min, i2.min),
+            max: f64::max(i1.max, i2.max),
+        }
+    }
+
     pub const EMPTY: Self = Self {
         min: f64::INFINITY,
         max: -f64::INFINITY,
@@ -37,4 +50,10 @@ impl Interval {
         min: -f64::INFINITY,
         max: f64::INFINITY,
     };
+}
+
+impl Default for Interval {
+    fn default() -> Self {
+        Interval::EMPTY
+    }
 }

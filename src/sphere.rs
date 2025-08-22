@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::aabb::AABB;
 use crate::hit::Hit;
 use crate::interval::Interval;
 use crate::material::Material;
@@ -10,22 +11,30 @@ pub struct Sphere {
     center: Ray,
     radius: f64,
     mat: Arc<dyn Material>,
+    bbox: AABB,
 }
 
 impl Sphere {
     pub fn new(center: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
+        let rvec = Vec3::new(radius, radius, radius);
         Self {
             center: Ray::new(center, Vec3::ZERO),
             radius: f64::max(0.0, radius),
             mat,
+            bbox: AABB::from((center - rvec, center + rvec)),
         }
     }
 
     pub fn new_moving(center1: Vec3, center2: Vec3, radius: f64, mat: Arc<dyn Material>) -> Self {
+        let center = Ray::new(center1, center2 - center1);
+        let rvec = Vec3::new(radius, radius, radius);
+        let box1 = AABB::from((center.at(0.0) - rvec, center.at(0.0) + rvec));
+        let box2 = AABB::from((center.at(1.0) - rvec, center.at(1.0) + rvec));
         Self {
-            center: Ray::new(center1, center2 - center1),
+            center,
             radius: f64::max(0.0, radius),
             mat,
+            bbox: AABB::from((box1, box2)),
         }
     }
 }
@@ -59,5 +68,9 @@ impl Hit for Sphere {
         let outward_normal = (rec.p - current_center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         return true;
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox
     }
 }

@@ -1,3 +1,5 @@
+mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hit;
@@ -17,7 +19,7 @@ use std::sync::Arc;
 use utils::random_f64;
 use vec3::Vec3;
 
-use crate::utils::random_range_f64;
+use crate::{bvh::BVHNode, utils::random_range_f64};
 
 fn main() {
     let mut world = Hittables::default();
@@ -79,6 +81,9 @@ fn main() {
         1.0,
         material_3,
     )));
+
+    let bvh = BVHNode::from(world);
+    let world = Hittables::from(Arc::new(bvh));
 
     let mut cam = Camera::default();
     cam.aspect_ratio = 16.0 / 9.0;
