@@ -6,6 +6,7 @@ mod hit;
 mod interval;
 mod material;
 mod perlin;
+mod quad;
 mod ray;
 mod sphere;
 mod texture;
@@ -23,12 +24,49 @@ use vec3::Vec3;
 
 use crate::{
     bvh::BVHNode,
+    quad::Quad,
     texture::{CheckerTexture, NoiseTexture},
     utils::random_range_f64,
 };
 
 fn main() {
-    perlin_spheres();
+    quads();
+}
+
+fn quads() {
+    let mut world = Hittables::default();
+    let quad_color = Arc::new(Lambertian::new_color(Color::random()));
+
+    world.add(Arc::new(Quad::new(
+        Vec3::new(-3.0, -2.0, 5.0),
+        Vec3::new(0.0, 0.0, -4.0),
+        Vec3::new(0.0, 4.0, 0.0),
+        quad_color.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        Vec3::new(-2.0, -2.0, 0.0),
+        Vec3::new(4.0, 0.0, 0.0),
+        Vec3::new(0.0, 4.0, 0.0),
+        quad_color.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        Vec3::new(3.0, -2.0, 1.0),
+        Vec3::new(0.0, 0.0, 4.0),
+        Vec3::new(0.0, 4.0, 0.0),
+        quad_color.clone(),
+    )));
+
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.vfov = 80.0;
+    cam.lookfrom = Vec3::new(0.0, 0.0, 9.0);
+    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
 }
 
 fn perlin_spheres() {
