@@ -5,6 +5,7 @@ mod color;
 mod hit;
 mod interval;
 mod material;
+mod perlin;
 mod ray;
 mod sphere;
 mod texture;
@@ -20,9 +21,75 @@ use std::sync::Arc;
 use utils::random_f64;
 use vec3::Vec3;
 
-use crate::{bvh::BVHNode, texture::CheckerTexture, utils::random_range_f64};
+use crate::{
+    bvh::BVHNode,
+    texture::{CheckerTexture, NoiseTexture},
+    utils::random_range_f64,
+};
 
 fn main() {
+    perlin_spheres();
+}
+
+fn perlin_spheres() {
+    let mut world = Hittables::default();
+    let perlin = Arc::new(NoiseTexture::new(4.0));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::new(Lambertian::new(perlin.clone())),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::new(Lambertian::new(perlin.clone())),
+    )));
+
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
+}
+
+fn checkered_spheres() {
+    let mut world = Hittables::default();
+    let checker = Arc::new(CheckerTexture::new_solid(
+        0.32,
+        Color::new(0.2, 0.3, 0.1),
+        Color::new(0.9, 0.9, 0.9),
+    ));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -10.0, 0.0),
+        10.0,
+        Arc::new(Lambertian::new(checker.clone())),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 10.0, 0.0),
+        10.0,
+        Arc::new(Lambertian::new(checker)),
+    )));
+
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.render(&world);
+}
+
+fn bouncing_spheres() {
     let mut world = Hittables::default();
 
     let checker = Arc::new(CheckerTexture::new_solid(

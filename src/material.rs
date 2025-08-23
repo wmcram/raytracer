@@ -50,7 +50,7 @@ impl Material for Lambertian {
         }
 
         *scattered = Ray::new(rec.p, scatter_direction).with_time(r_in.time());
-        *attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        *attenuation = self.tex.value(rec.u, rec.v, rec.p);
         true
     }
 }

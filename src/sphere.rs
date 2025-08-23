@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 use crate::aabb::AABB;
@@ -37,6 +38,12 @@ impl Sphere {
             bbox: AABB::from((box1, box2)),
         }
     }
+
+    pub fn get_sphere_uv(p: Vec3) -> (f64, f64) {
+        let theta = f64::acos(-p.y());
+        let phi = (-p.z()).atan2(p.x()) + PI;
+        (phi / (2.0 * PI), theta / PI)
+    }
 }
 
 impl Hit for Sphere {
@@ -67,6 +74,7 @@ impl Hit for Sphere {
         rec.mat = self.mat.clone();
         let outward_normal = (rec.p - current_center) / self.radius;
         rec.set_face_normal(r, outward_normal);
+        (rec.u, rec.v) = Self::get_sphere_uv(outward_normal);
         return true;
     }
 

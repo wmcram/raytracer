@@ -9,7 +9,9 @@ pub struct AABB {
 
 impl AABB {
     pub const fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        Self { x, y, z }
+        let mut tmp = AABB { x, y, z };
+        tmp.pad_to_minimums();
+        tmp
     }
 
     pub fn axis_interval(&self, n: usize) -> Interval {
@@ -62,6 +64,20 @@ impl AABB {
             if self.x.size() > self.z.size() { 0 } else { 2 }
         } else {
             if self.y.size() > self.z.size() { 1 } else { 2 }
+        }
+    }
+
+    pub const fn pad_to_minimums(&mut self) {
+        const DELTA: f64 = 0.0001;
+
+        if self.x.size() < DELTA {
+            self.x = self.x.expand(DELTA);
+        }
+        if self.y.size() < DELTA {
+            self.y = self.y.expand(DELTA);
+        }
+        if self.z.size() < DELTA {
+            self.z = self.z.expand(DELTA);
         }
     }
 

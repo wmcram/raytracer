@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::{color::Color, vec3::Vec3};
+use crate::{color::Color, perlin::Perlin, vec3::Vec3};
 
 pub trait Texture: Send + Sync {
-    fn value(&self, u: f64, v: f64, p: &Vec3) -> Color;
+    fn value(&self, u: f64, v: f64, p: Vec3) -> Color;
 }
 
 pub struct SolidColor {
@@ -25,7 +25,7 @@ impl From<(f64, f64, f64)> for SolidColor {
 }
 
 impl Texture for SolidColor {
-    fn value(&self, u: f64, v: f64, p: &Vec3) -> Color {
+    fn value(&self, u: f64, v: f64, p: Vec3) -> Color {
         self.albedo
     }
 }
@@ -55,7 +55,7 @@ impl CheckerTexture {
 }
 
 impl Texture for CheckerTexture {
-    fn value(&self, u: f64, v: f64, p: &Vec3) -> Color {
+    fn value(&self, u: f64, v: f64, p: Vec3) -> Color {
         let x_int = f64::floor(self.inv_scale * p.x()) as i32;
         let y_int = f64::floor(self.inv_scale * p.y()) as i32;
         let z_int = f64::floor(self.inv_scale * p.z()) as i32;
@@ -65,5 +65,27 @@ impl Texture for CheckerTexture {
         } else {
             self.odd.value(u, v, p)
         }
+    }
+}
+
+#[derive(Default)]
+pub struct NoiseTexture {
+    noise: Perlin,
+    scale: f64,
+}
+
+impl NoiseTexture {
+    pub fn new(scale: f64) -> Self {
+        Self {
+            scale,
+            ..Default::default()
+        }
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, u: f64, v: f64, p: Vec3) -> Color {
+        Color::new(0.5, 0.5, 0.5)
+            * (1.0 + f64::sin(self.scale * p.z() + 10.0 * self.noise.turb(p, 7)))
     }
 }
