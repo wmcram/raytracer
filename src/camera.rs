@@ -21,6 +21,7 @@ pub struct Camera {
     pub vup: Vec3,
     pub defocus_angle: f64,
     pub focus_dist: f64,
+    pub background: Color,
 
     image_height: usize,
     center: Vec3,
@@ -38,6 +39,7 @@ pub struct Camera {
     defocus_disk_v: Vec3,
 }
 
+// TODO: refactor to builder pattern
 impl Default for Camera {
     fn default() -> Self {
         Self {
@@ -51,6 +53,7 @@ impl Default for Camera {
             vup: Vec3::new(0.0, 1.0, 0.0),
             defocus_angle: 0.0,
             focus_dist: 10.0,
+            background: Default::default(),
 
             image_height: Default::default(),
             pixel_samples_scale: Default::default(),
@@ -117,7 +120,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&r, self.max_depth, world);
+                    pixel_color += self.ray_color(&r, self.max_depth, world);
                 }
                 pixel_color * self.pixel_samples_scale
             })
@@ -131,13 +134,14 @@ impl Camera {
 
     // Determines the color that the camera sees along this ray. This function calls itself
     // recursively up to limit `depth` to account for reflection/refraction.
-    fn ray_color(r: &Ray, depth: u32, world: &dyn Hit) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &dyn Hit) -> Color {
         if depth <= 0 {
             return Color::default();
         }
 
         let mut rec = HitRecord::default();
-        if world.hit(
+
+        if !world.hit(
             r,
             Interval {
                 min: 0.001,
@@ -145,16 +149,17 @@ impl Camera {
             },
             &mut rec,
         ) {
-            let mut scattered = Ray::default();
-            let mut attentuation = Color::default();
-            if rec.mat.scatter(r, &rec, &mut attentuation, &mut scattered) {
-                return attentuation * Self::ray_color(&scattered, depth - 1, world);
-            }
-            return Color::default();
+            return self.background;
         }
-        let unit_direction = unit_vector(r.direction());
-        let a = 0.5 * (unit_direction.y() + 1.0);
-        return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
+
+        let mut scattered = Ray::default();
+        let mut attenuation = Color::default();
+        let color_from_emission = rec.mat.emitted(rec.u, rec.v, rec.p);
+        if !rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+            return color_from_emission;
+        }
+        let color_from_scatter = attenuation * self.ray_color(&scattered, depth - 1, world);
+        color_from_emission + color_from_scatter
     }
 
     fn get_ray(&self, i: usize, j: usize) -> Ray {

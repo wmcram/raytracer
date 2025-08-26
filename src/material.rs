@@ -16,7 +16,13 @@ pub trait Material: Send + Sync {
         rec: &HitRecord,
         attenuation: &mut Color,
         scattered: &mut Ray,
-    ) -> bool;
+    ) -> bool {
+        false
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: Vec3) -> Color {
+        Color::default()
+    }
 }
 
 pub struct Lambertian {
@@ -133,4 +139,24 @@ impl Material for Dielectric {
     }
 }
 
-pub struct DiffuseLight {}
+pub struct DiffuseLight {
+    tex: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(tex: Arc<dyn Texture>) -> Self {
+        Self { tex }
+    }
+
+    pub fn new_color(emit: Color) -> Self {
+        Self {
+            tex: Arc::new(SolidColor::from(emit)),
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn emitted(&self, u: f64, v: f64, p: Vec3) -> Color {
+        self.tex.value(u, v, p)
+    }
+}

@@ -24,13 +24,55 @@ use vec3::Vec3;
 
 use crate::{
     bvh::BVHNode,
+    material::DiffuseLight,
     quad::Quad,
     texture::{CheckerTexture, NoiseTexture},
     utils::random_range_f64,
 };
 
 fn main() {
-    quads();
+    simple_light();
+}
+
+fn simple_light() {
+    let mut world = Hittables::default();
+    let pertext = Arc::new(NoiseTexture::new(4.0));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::new(Lambertian::new(pertext.clone())),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::new(Lambertian::new(pertext)),
+    )));
+
+    let difflight = Arc::new(DiffuseLight::new_color(Color::new(4.0, 4.0, 4.0)));
+    world.add(Arc::new(Quad::new(
+        Vec3::new(3.0, 1.0, -2.0),
+        Vec3::new(2.0, 0.0, 0.0),
+        Vec3::new(0.0, 2.0, 0.0),
+        difflight.clone(),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0.0, 7.0, 0.0),
+        2.0,
+        difflight,
+    )));
+
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.vfov = 20.0;
+    cam.lookfrom = Vec3::new(26.0, 3.0, 6.0);
+    cam.lookat = Vec3::new(0.0, 2.0, 0.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+    cam.defocus_angle = 0.0;
+    cam.background = Color::default();
+    cam.render(&world);
 }
 
 fn quads() {
@@ -66,6 +108,7 @@ fn quads() {
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.0;
+    cam.background = Color::new(0.75, 0.1, 0.75);
     cam.render(&world);
 }
 
@@ -93,6 +136,7 @@ fn perlin_spheres() {
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.0;
+    cam.background = Color::new(0.75, 0.1, 0.75);
     cam.render(&world);
 }
 
@@ -124,6 +168,7 @@ fn checkered_spheres() {
     cam.lookat = Vec3::new(0.0, 0.0, 0.0);
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.0;
+    cam.background = Color::new(0.75, 0.1, 0.75);
     cam.render(&world);
 }
 
@@ -207,5 +252,6 @@ fn bouncing_spheres() {
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+    cam.background = Color::new(0.75, 0.1, 0.75);
     cam.render(&world);
 }
