@@ -1,4 +1,3 @@
-use std::cmp::min;
 use std::fmt::{self, Display};
 use std::ops::{Mul, MulAssign};
 
@@ -41,15 +40,15 @@ impl Vec3 {
 
     // Creates the vector representing the reflection
     // of v off the surface with normal n.
-    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-        *v - *n * 2.0 * dot(v, n)
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        v - n * 2.0 * dot(v, n)
     }
 
     // Creates the vector representing the refraction
     // of uv through the surface with surface normal n and
     // refraction indices eta_i, eta_t.
     pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
-        let cos_theta = f64::min(dot(&-uv, &n), 1.0);
+        let cos_theta = f64::min(dot(-uv, n), 1.0);
         let r_out_perp = (uv + n * cos_theta) * etai_over_etat;
         let r_out_para = n * -f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared()));
         r_out_perp + r_out_para
@@ -77,9 +76,9 @@ impl Vec3 {
         }
     }
 
-    pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+    pub fn random_on_hemisphere(normal: Vec3) -> Vec3 {
         let on_unit_sphere = Vec3::random_unit_vector();
-        if dot(&on_unit_sphere, normal) > 0.0 {
+        if dot(on_unit_sphere, normal) > 0.0 {
             on_unit_sphere
         } else {
             -on_unit_sphere
@@ -102,11 +101,11 @@ impl Vec3 {
     pub const ZERO: Vec3 = Vec3 { e: [0.0, 0.0, 0.0] };
 }
 
-pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
+pub fn dot(u: Vec3, v: Vec3) -> f64 {
     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
 }
 
-pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
     Vec3 {
         e: [
             u.e[1] * v.e[2] - u.e[2] * v.e[1],
@@ -116,8 +115,8 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
     }
 }
 
-pub fn unit_vector(v: &Vec3) -> Vec3 {
-    *v / v.length()
+pub fn unit_vector(v: Vec3) -> Vec3 {
+    v / v.length()
 }
 
 impl std::ops::Neg for Vec3 {

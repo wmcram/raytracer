@@ -74,12 +74,12 @@ impl Material for Metal {
         attenuation: &mut Color,
         scattered: &mut Ray,
     ) -> bool {
-        let reflected = Vec3::reflect(&r_in.direction(), &rec.normal);
-        let reflected = unit_vector(&reflected) + (Vec3::random_unit_vector() * self.fuzz);
+        let reflected = Vec3::reflect(r_in.direction(), rec.normal);
+        let reflected = unit_vector(reflected) + (Vec3::random_unit_vector() * self.fuzz);
         *scattered = Ray::new(rec.p, reflected).with_time(r_in.time());
         *attenuation = self.albedo;
 
-        return dot(&scattered.direction(), &rec.normal) > 0.0;
+        return dot(scattered.direction(), rec.normal) > 0.0;
     }
 }
 
@@ -116,14 +116,14 @@ impl Material for Dielectric {
         } else {
             self.refraction_index
         };
-        let unit_direction = unit_vector(&r_in.direction());
+        let unit_direction = unit_vector(r_in.direction());
 
-        let cos_theta = f64::min(dot(&-unit_direction, &rec.normal), 1.0);
+        let cos_theta = f64::min(dot(-unit_direction, rec.normal), 1.0);
         let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
 
         let cannot_refract = ri * sin_theta > 1.0;
         let direction = if cannot_refract || Dielectric::reflectance(cos_theta, ri) > random_f64() {
-            Vec3::reflect(&unit_direction, &rec.normal)
+            Vec3::reflect(unit_direction, rec.normal)
         } else {
             Vec3::refract(unit_direction, rec.normal, ri)
         };
@@ -132,3 +132,5 @@ impl Material for Dielectric {
         return true;
     }
 }
+
+pub struct DiffuseLight {}

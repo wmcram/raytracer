@@ -51,7 +51,7 @@ impl Hit for Sphere {
         let current_center = self.center.at(r.time());
         let oc = current_center - r.origin();
         let a = r.direction().length_squared();
-        let h = dot(&r.direction(), &oc);
+        let h = dot(r.direction(), oc);
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;

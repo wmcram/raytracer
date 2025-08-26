@@ -84,9 +84,9 @@ impl Camera {
         let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
-        self.w = unit_vector(&(self.lookfrom - self.lookat));
-        self.u = unit_vector(&cross(&self.vup, &self.w));
-        self.v = cross(&self.w, &self.u);
+        self.w = unit_vector(self.lookfrom - self.lookat);
+        self.u = unit_vector(cross(self.vup, self.w));
+        self.v = cross(self.w, self.u);
 
         let viewport_u = self.u * viewport_width;
         let viewport_v = -self.v * viewport_height;
@@ -152,7 +152,7 @@ impl Camera {
             }
             return Color::default();
         }
-        let unit_direction = unit_vector(&r.direction());
+        let unit_direction = unit_vector(r.direction());
         let a = 0.5 * (unit_direction.y() + 1.0);
         return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
     }

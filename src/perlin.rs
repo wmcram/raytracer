@@ -89,7 +89,7 @@ fn perlin_interp(c: [[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
                 acc += (i as f64 * uu + (1 - i) as f64 * (1.0 - uu))
                     * (j as f64 * vv + (1 - j) as f64 * (1.0 - vv))
                     * (k as f64 * ww + (1 - k) as f64 * (1.0 - ww))
-                    * dot(&c[i][j][k], &weight_v);
+                    * dot(c[i][j][k], weight_v);
             }
         }
     }
