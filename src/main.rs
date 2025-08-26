@@ -31,7 +31,7 @@ use crate::{
 };
 
 fn main() {
-    cornell_box();
+    bouncing_spheres();
 }
 
 fn cornell_box() {
@@ -305,7 +305,7 @@ fn bouncing_spheres() {
     let mut cam = Camera::default();
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 10;
+    cam.samples_per_pixel = 5;
     cam.max_depth = 50;
 
     cam.vfov = 20.0;
@@ -314,6 +314,6 @@ fn bouncing_spheres() {
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
-    cam.background = Color::new(0.75, 0.1, 0.75);
+    cam.background = Color::new(1.0, 1.0, 1.0);
     cam.render(&world);
 }
