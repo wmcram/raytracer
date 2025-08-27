@@ -26,7 +26,7 @@ use crate::{
     bvh::BVHNode,
     hit::{Rotated, Translated},
     material::DiffuseLight,
-    quad::{MakeBox, Quad},
+    quad::{Quad, make_box},
     texture::{CheckerTexture, NoiseTexture},
     utils::random_range_f64,
 };
@@ -82,7 +82,7 @@ fn cornell_box() {
     )));
 
     // Make boxes
-    let box1 = MakeBox(
+    let box1 = make_box(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 330.0, 165.0),
         white.clone(),
@@ -91,7 +91,7 @@ fn cornell_box() {
     let box1 = Arc::new(Translated::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     world.add(box1);
 
-    let box2 = MakeBox(
+    let box2 = make_box(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 165.0, 165.0),
         white,
@@ -100,19 +100,19 @@ fn cornell_box() {
     let box2 = Arc::new(Translated::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     world.add(box2);
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 1.0;
-    cam.image_width = 600;
-    cam.samples_per_pixel = 200;
-    cam.max_depth = 50;
-    cam.background = Color::new(0.0, 0.0, 0.0);
-
-    cam.vfov = 40.0;
-    cam.lookfrom = Vec3::new(278.0, 278.0, -800.0);
-    cam.lookat = Vec3::new(278.0, 278.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.defocus_angle = 0.0;
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(1.0)
+        .with_image_width(600)
+        .with_samples_per_pixel(200)
+        .with_max_depth(50)
+        .with_background(Color::default())
+        .with_vfov(40.0)
+        .with_lookfrom(Vec3::new(278.0, 278.0, -800.0))
+        .with_lookat(Vec3::new(278.0, 278.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.0)
+        .with_focus_dist(10.0)
+        .build();
 
     cam.render(&world);
 }
@@ -144,17 +144,19 @@ fn simple_light() {
         difflight,
     )));
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 400;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-    cam.vfov = 20.0;
-    cam.lookfrom = Vec3::new(26.0, 3.0, 6.0);
-    cam.lookat = Vec3::new(0.0, 2.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-    cam.defocus_angle = 0.0;
-    cam.background = Color::default();
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(16.0 / 9.0)
+        .with_image_width(400)
+        .with_samples_per_pixel(100)
+        .with_max_depth(50)
+        .with_vfov(20.0)
+        .with_lookfrom(Vec3::new(26.0, 3.0, 6.0))
+        .with_lookat(Vec3::new(0.0, 2.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.0)
+        .with_focus_dist(10.0)
+        .with_background(Color::default())
+        .build();
     cam.render(&world);
 }
 
@@ -181,17 +183,19 @@ fn quads() {
         quad_color.clone(),
     )));
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 1.0;
-    cam.image_width = 400;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-    cam.vfov = 80.0;
-    cam.lookfrom = Vec3::new(0.0, 0.0, 9.0);
-    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-    cam.defocus_angle = 0.0;
-    cam.background = Color::new(0.75, 0.1, 0.75);
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(1.0)
+        .with_image_width(400)
+        .with_samples_per_pixel(100)
+        .with_max_depth(50)
+        .with_vfov(80.0)
+        .with_lookfrom(Vec3::new(0.0, 0.0, 9.0))
+        .with_lookat(Vec3::new(0.0, 0.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.0)
+        .with_focus_dist(10.0)
+        .with_background(Color::new(0.75, 0.1, 0.75))
+        .build();
     cam.render(&world);
 }
 
@@ -209,17 +213,20 @@ fn perlin_spheres() {
         Arc::new(Lambertian::new(perlin.clone())),
     )));
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 400;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-    cam.vfov = 20.0;
-    cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-    cam.defocus_angle = 0.0;
-    cam.background = Color::new(0.75, 0.1, 0.75);
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(16.0 / 9.0)
+        .with_image_width(400)
+        .with_samples_per_pixel(100)
+        .with_max_depth(50)
+        .with_vfov(20.0)
+        .with_lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .with_lookat(Vec3::new(0.0, 0.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.0)
+        .with_focus_dist(10.0)
+        .with_background(Color::new(0.75, 0.1, 0.75))
+        .build();
+
     cam.render(&world);
 }
 
@@ -241,17 +248,20 @@ fn checkered_spheres() {
         Arc::new(Lambertian::new(checker)),
     )));
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 400;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-    cam.vfov = 20.0;
-    cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-    cam.defocus_angle = 0.0;
-    cam.background = Color::new(0.75, 0.1, 0.75);
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(16.0 / 9.0)
+        .with_image_width(400)
+        .with_samples_per_pixel(100)
+        .with_max_depth(50)
+        .with_vfov(20.0)
+        .with_lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .with_lookat(Vec3::new(0.0, 0.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.0)
+        .with_focus_dist(10.0)
+        .with_background(Color::new(0.75, 0.1, 0.75))
+        .build();
+
     cam.render(&world);
 }
 
@@ -323,18 +333,19 @@ fn bouncing_spheres() {
     let bvh = BVHNode::from(world);
     let world = Hittables::from(Arc::new(bvh));
 
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 600;
-    cam.samples_per_pixel = 5;
-    cam.max_depth = 50;
+    let mut cam = Camera::builder()
+        .with_aspect_ratio(16.0 / 9.0)
+        .with_image_width(600)
+        .with_samples_per_pixel(5)
+        .with_max_depth(50)
+        .with_vfov(20.0)
+        .with_lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .with_lookat(Vec3::new(0.0, 0.0, 0.0))
+        .with_vup(Vec3::new(0.0, 1.0, 0.0))
+        .with_defocus_angle(0.6)
+        .with_focus_dist(10.0)
+        .with_background(Color::new(1.0, 1.0, 1.0))
+        .build();
 
-    cam.vfov = 20.0;
-    cam.lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    cam.lookat = Vec3::new(0.0, 0.0, 0.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-    cam.defocus_angle = 0.6;
-    cam.focus_dist = 10.0;
-    cam.background = Color::new(1.0, 1.0, 1.0);
     cam.render(&world);
 }

@@ -87,7 +87,7 @@ impl Hit for Quad {
 
 // Makes an instance of a box with the given corners and material, represented as
 // a hittable list of quads.
-pub fn MakeBox(a: Vec3, b: Vec3, mat: Arc<dyn Material>) -> Arc<Hittables> {
+pub fn make_box(a: Vec3, b: Vec3, mat: Arc<dyn Material>) -> Arc<Hittables> {
     let mut sides = Hittables::default();
     let mn = Vec3::new(a.x().min(b.x()), a.y().min(b.y()), a.z().min(b.z()));
     let mx = Vec3::new(a.x().max(b.x()), a.y().max(b.y()), a.z().max(b.z()));

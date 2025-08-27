@@ -10,6 +10,7 @@ use crate::ray::Ray;
 use crate::utils::random_f64;
 use crate::vec3::{Vec3, cross, unit_vector};
 
+#[derive(Default)]
 pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: usize,
@@ -39,34 +40,70 @@ pub struct Camera {
     defocus_disk_v: Vec3,
 }
 
-// TODO: refactor to builder pattern
-impl Default for Camera {
-    fn default() -> Self {
-        Self {
-            aspect_ratio: 1.0,
-            image_width: 100,
-            samples_per_pixel: 10,
-            max_depth: 10,
-            vfov: 90.0,
-            lookfrom: Vec3::new(0.0, 0.0, 0.0),
-            lookat: Vec3::new(0.0, 0.0, -1.0),
-            vup: Vec3::new(0.0, 1.0, 0.0),
-            defocus_angle: 0.0,
-            focus_dist: 10.0,
-            background: Default::default(),
+// builder fns
+impl Camera {
+    pub fn builder() -> Self {
+        Self::default()
+    }
 
-            image_height: Default::default(),
-            pixel_samples_scale: Default::default(),
-            center: Default::default(),
-            pixel00_loc: Default::default(),
-            pixel_delta_u: Default::default(),
-            pixel_delta_v: Default::default(),
-            u: Default::default(),
-            v: Default::default(),
-            w: Default::default(),
-            defocus_disk_u: Default::default(),
-            defocus_disk_v: Default::default(),
-        }
+    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -> Self {
+        self.aspect_ratio = aspect_ratio;
+        self
+    }
+
+    pub fn with_image_width(mut self, image_width: usize) -> Self {
+        self.image_width = image_width;
+        self
+    }
+
+    pub fn with_samples_per_pixel(mut self, samples_per_pixel: u32) -> Self {
+        self.samples_per_pixel = samples_per_pixel;
+        self
+    }
+
+    pub fn with_max_depth(mut self, max_depth: u32) -> Self {
+        self.max_depth = max_depth;
+        self
+    }
+
+    pub fn with_vfov(mut self, vfov: f64) -> Self {
+        self.vfov = vfov;
+        self
+    }
+
+    pub fn with_lookfrom(mut self, lookfrom: Vec3) -> Self {
+        self.lookfrom = lookfrom;
+        self
+    }
+
+    pub fn with_lookat(mut self, lookat: Vec3) -> Self {
+        self.lookat = lookat;
+        self
+    }
+
+    pub fn with_vup(mut self, vup: Vec3) -> Self {
+        self.vup = vup;
+        self
+    }
+
+    pub fn with_defocus_angle(mut self, defocus_angle: f64) -> Self {
+        self.defocus_angle = defocus_angle;
+        self
+    }
+
+    pub fn with_focus_dist(mut self, focus_dist: f64) -> Self {
+        self.focus_dist = focus_dist;
+        self
+    }
+
+    pub fn with_background(mut self, background: Color) -> Self {
+        self.background = background;
+        self
+    }
+
+    pub fn build(mut self) -> Self {
+        self.initialize();
+        self
     }
 }
 
