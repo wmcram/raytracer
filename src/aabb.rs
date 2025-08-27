@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use crate::{interval::Interval, ray::Ray, vec3::Vec3};
 
 #[derive(Default, Copy, Clone)]
@@ -115,5 +117,21 @@ impl From<(AABB, AABB)> for AABB {
             Interval::enclosing(v.0.y, v.1.y),
             Interval::enclosing(v.0.z, v.1.z),
         )
+    }
+}
+
+// Adding a vector to a bbox displaces it accordingly.
+impl Add<Vec3> for AABB {
+    type Output = Self;
+    fn add(self, rhs: Vec3) -> Self::Output {
+        Self::new(self.x + rhs.x(), self.y + rhs.y(), self.z + rhs.z())
+    }
+}
+
+// Adding a vector to a bbox displaces it accordingly.
+impl Add<AABB> for Vec3 {
+    type Output = AABB;
+    fn add(self, rhs: AABB) -> Self::Output {
+        rhs + self
     }
 }

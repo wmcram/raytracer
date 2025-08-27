@@ -110,3 +110,121 @@ impl Hit for Hittables {
         self.bbox
     }
 }
+
+pub struct Translated {
+    object: Arc<dyn Hit>,
+    offset: Vec3,
+    bbox: AABB,
+}
+
+impl Translated {
+    pub fn new(object: Arc<dyn Hit>, offset: Vec3) -> Self {
+        let bbox = object.bounding_box() + offset;
+        Self {
+            object,
+            offset,
+            bbox,
+        }
+    }
+}
+
+impl Hit for Translated {
+    fn bounding_box(&self) -> AABB {
+        self.bbox
+    }
+
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+        let offset_r = Ray::new(r.origin() - self.offset, r.direction()).with_time(r.time());
+        if !self.object.hit(&offset_r, ray_t, rec) {
+            return false;
+        }
+
+        rec.p += self.offset;
+        true
+    }
+}
+
+pub struct Rotated {
+    object: Arc<dyn Hit>,
+    sin_theta: f64,
+    cos_theta: f64,
+    bbox: AABB,
+}
+
+impl Rotated {
+    // Creates a new rotated instance of the given object with the given angle (in degrees!)
+    pub fn new(object: Arc<dyn Hit>, angle: f64) -> Self {
+        let rads = f64::to_radians(angle);
+        let sin_theta = f64::sin(rads);
+        let cos_theta = f64::cos(rads);
+        let bbox = object.bounding_box();
+
+        let mut mn = Vec3::new(f64::INFINITY, f64::INFINITY, f64::INFINITY);
+        let mut mx = -mn;
+
+        for i in 0..2 {
+            for j in 0..2 {
+                for k in 0..2 {
+                    let x = i as f64 * bbox.x.max + (1 - i) as f64 * bbox.x.min;
+                    let y = j as f64 * bbox.y.max + (1 - j) as f64 * bbox.y.min;
+                    let z = k as f64 * bbox.z.max + (1 - k) as f64 * bbox.z.min;
+
+                    let newx = cos_theta * x + sin_theta * z;
+                    let newz = -sin_theta * x + cos_theta * z;
+
+                    let tester = Vec3::new(newx, y, newz);
+
+                    for c in 0..3 {
+                        mn[c] = f64::min(mn[c], tester[c]);
+                        mx[c] = f64::max(mx[c], tester[c]);
+                    }
+                }
+            }
+        }
+
+        Self {
+            object,
+            sin_theta,
+            cos_theta,
+            bbox: AABB::from((mn, mx)),
+        }
+    }
+}
+
+impl Hit for Rotated {
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+        let origin = Vec3::new(
+            (self.cos_theta * r.origin().x()) - (self.sin_theta * r.origin().z()),
+            r.origin().y(),
+            (self.sin_theta * r.origin().x()) + (self.cos_theta * r.origin().z()),
+        );
+
+        let direction = Vec3::new(
+            (self.cos_theta * r.direction().x()) - (self.sin_theta * r.direction().z()),
+            r.direction().y(),
+            (self.sin_theta * r.direction().x()) + (self.cos_theta * r.direction().z()),
+        );
+
+        let rotated_r = Ray::new(origin, direction).with_time(r.time());
+        if !self.object.hit(&rotated_r, ray_t, rec) {
+            return false;
+        }
+
+        rec.p = Vec3::new(
+            (self.cos_theta * rec.p.x()) + (self.sin_theta * rec.p.z()),
+            rec.p.y(),
+            (-self.sin_theta * rec.p.x()) + (self.cos_theta * rec.p.z()),
+        );
+        rec.normal = Vec3::new(
+            (self.cos_theta * rec.normal.x()) + (self.sin_theta * rec.normal.z()),
+            rec.normal.y(),
+            (-self.sin_theta * rec.normal.x()) + (self.cos_theta * rec.normal.z()),
+        );
+
+        true
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox
+    }
+}

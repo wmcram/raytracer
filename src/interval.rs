@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 #[derive(Copy, Clone)]
 pub struct Interval {
     pub min: f64,
@@ -55,5 +57,21 @@ impl Interval {
 impl Default for Interval {
     fn default() -> Self {
         Interval::EMPTY
+    }
+}
+
+// Adding an f64 to an Interval displaces the Interval accordingly.
+impl Add<f64> for Interval {
+    type Output = Self;
+    fn add(self, rhs: f64) -> Self::Output {
+        Self::new(self.min + rhs, self.max + rhs)
+    }
+}
+
+// Adding an f64 to an Interval displaces the Interval accordingly.
+impl Add<Interval> for f64 {
+    type Output = Interval;
+    fn add(self, rhs: Interval) -> Self::Output {
+        rhs + self
     }
 }

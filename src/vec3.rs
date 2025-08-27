@@ -135,6 +135,12 @@ impl std::ops::Index<usize> for Vec3 {
     }
 }
 
+impl std::ops::IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        return &mut self.e[index];
+    }
+}
+
 impl std::ops::AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
         self.e[0] += rhs.e[0];

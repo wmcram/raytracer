@@ -24,14 +24,15 @@ use vec3::Vec3;
 
 use crate::{
     bvh::BVHNode,
+    hit::{Rotated, Translated},
     material::DiffuseLight,
-    quad::Quad,
+    quad::{MakeBox, Quad},
     texture::{CheckerTexture, NoiseTexture},
     utils::random_range_f64,
 };
 
 fn main() {
-    bouncing_spheres();
+    cornell_box();
 }
 
 fn cornell_box() {
@@ -42,6 +43,7 @@ fn cornell_box() {
     let green = Arc::new(Lambertian::new_color(Color::new(0.12, 0.45, 0.15)));
     let light = Arc::new(DiffuseLight::new_color(Color::new(15.0, 15.0, 15.0)));
 
+    // Make walls and light
     world.add(Arc::new(Quad::new(
         Vec3::new(555.0, 0.0, 0.0),
         Vec3::new(0.0, 555.0, 0.0),
@@ -78,6 +80,25 @@ fn cornell_box() {
         Vec3::new(0.0, 555.0, 0.0),
         white.clone(),
     )));
+
+    // Make boxes
+    let box1 = MakeBox(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    );
+    let box1 = Arc::new(Rotated::new(box1, 15.0));
+    let box1 = Arc::new(Translated::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+    world.add(box1);
+
+    let box2 = MakeBox(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        white,
+    );
+    let box2 = Arc::new(Rotated::new(box2, -18.0));
+    let box2 = Arc::new(Translated::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    world.add(box2);
 
     let mut cam = Camera::default();
     cam.aspect_ratio = 1.0;
